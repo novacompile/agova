@@ -98,3 +98,8 @@ agova --setup
 agova --help
 ```
 
+## Uninstall
+
+Follow these steps based on your operating system, to uninstall agova.
+
+### Linux / Mac
