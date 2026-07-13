@@ -2,6 +2,8 @@
 
 ## Quick Install
 
+Install for either Linux/Mac (bash) or Windows (bat).
+
 ### Linux / Mac
 ```bash
 # Clone the repository
@@ -31,4 +33,26 @@ install\install.bat
 
 # Restart your terminal or run:
 agova
+```
+
+## Manual Installation
+
+If the automatic installer doesn't work, you can install manually:
+
+### Linux / Mac
+
+1. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+2. Add to your shell configuration (~/.bashrc or ~/.zshrc):
+
+alias agova='python3 /path/to/agova/main.py'
+
+3. Reload your shell:
+
+```
+source ~/.bashrc
 ```
