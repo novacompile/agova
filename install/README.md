@@ -2,7 +2,7 @@
 
 ## Quick Install
 
-Install for either Linux/Mac (bash) or Windows (bat).
+Install for either Linux/Mac (`bash`) or Windows (`bat`).
 
 ### Linux / Mac
 ```bash
