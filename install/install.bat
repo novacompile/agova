@@ -1,6 +1,6 @@
 @echo off
 REM ###############################################################################
-REM # Agova AI Agent System - Simple Installation Script (Windows)
+REM # Agova AI Agent System - Installation Script (Windows)
 REM ###############################################################################
 
 setlocal enabledelayedexpansion
@@ -15,7 +15,7 @@ echo ========================================
 echo    Agova AI Agent System Installer
 echo ========================================
 echo.
-echo Installing Agova from: %AGOVA_DIR%
+echo Agova directory: %AGOVA_DIR%
 echo.
 
 REM Check Python
@@ -40,59 +40,53 @@ echo [OK] pip found
 REM Install dependencies
 echo Installing dependencies...
 cd /d "%AGOVA_DIR%"
-pip install -r requirements.txt >nul 2>&1
+pip install -r requirements.txt
 echo [OK] Dependencies installed
 
 REM Create workspace directory
 if not exist "workspace" mkdir workspace
-echo [OK] Workspace directory created
+echo [OK] Workspace directory ready
 
 REM Create launcher batch file
 echo Creating launcher...
 (
 echo @echo off
-echo set "AGOVA_DIR=%AGOVA_DIR%"
-echo python "%%AGOVA_DIR%%\main.py" %%*
+echo python "%AGOVA_DIR%\main.py" %%*
 ) > "%AGOVA_DIR%\agova.bat"
 echo [OK] Launcher created
 
+REM Create wrapper for PowerShell
+(
+echo @echo off
+echo python "%AGOVA_DIR%\main.py" %%*
+) > "%AGOVA_DIR%\agova.cmd"
+
 REM Add to system PATH
 echo Adding to system PATH...
-set "PATH_TO_ADD=%AGOVA_DIR%"
-setx PATH "%PATH%;%PATH_TO_ADD%" >nul 2>&1
+setx PATH "%PATH%;%AGOVA_DIR%" >nul 2>&1
 echo [OK] Added to PATH
 
-REM Create PowerShell alias
+REM Create PowerShell profile alias
 echo Creating PowerShell alias...
 powershell -Command "
-    $profileDir = Split-Path $PROFILE -Parent
-    if (!(Test-Path $profileDir)) {
-        New-Item -ItemType Directory -Force -Path $profileDir | Out-Null
+    \$agovaDir = '%AGOVA_DIR%'
+    \$profileDir = Split-Path \$PROFILE -Parent
+    if (!(Test-Path \$profileDir)) {
+        New-Item -ItemType Directory -Force -Path \$profileDir | Out-Null
     }
-    $aliasLine = 'function agova { python \"%AGOVA_DIR%\main.py\" @args }'
-    if (Test-Path $PROFILE) {
-        $content = Get-Content $PROFILE -Raw
-        if ($content -notmatch 'function agova') {
-            Add-Content $PROFILE \"`n# Agova AI Agent System\"
-            Add-Content $PROFILE $aliasLine
+    \$newAlias = \"function agova { python `\"\$agovaDir\main.py`\" @args }\"
+    if (Test-Path \$PROFILE) {
+        \$content = Get-Content \$PROFILE -Raw
+        if (\$content -notmatch 'function agova') {
+            Add-Content \$PROFILE \"\`n# Agova AI Agent System\"
+            Add-Content \$PROFILE \$newAlias
         }
     } else {
-        \"# Agova AI Agent System\" | Out-File $PROFILE
-        $aliasLine | Out-File $PROFILE -Append
+        \"# Agova AI Agent System\" | Out-File \$PROFILE
+        \$newAlias | Out-File \$PROFILE -Append
     }
 " >nul 2>&1
 echo [OK] PowerShell alias created
-
-REM Create Command Prompt doskey macro
-(
-echo @echo off
-echo REM Agova AI Agent System
-echo doskey agova=python "%AGOVA_DIR%\main.py" $*
-) > "%USERPROFILE%\agova_aliases.bat"
-
-REM Add to registry for Command Prompt auto-run
-reg add "HKCU\Software\Microsoft\Command Processor" /v AutoRun /t REG_SZ /d "%USERPROFILE%\agova_aliases.bat" /f >nul 2>&1
-echo [OK] Command Prompt alias created
 
 echo.
 echo ========================================
