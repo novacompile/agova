@@ -1,0 +1,40 @@
+{
+  "api": {
+    "groq_api_key": "",
+    "provider": "groq"
+  },
+  "models": {
+    "default": "mixtral-8x7b-32768",
+    "researcher": "mixtral-8x7b-32768",
+    "coder": "llama-3.1-70b-versatile",
+    "validator": "llama-3.1-70b-versatile",
+    "debugger": "llama-3.1-70b-versatile"
+  },
+  "workspace": {
+    "directory": "workspace",
+    "enable_file_tree": true,
+    "auto_cleanup": false,
+    "max_workspace_age_days": 30
+  },
+  "agents": {
+    "max_retries": 3,
+    "temperature": 0.7,
+    "max_tokens": 8192,
+    "research_depth": "detailed",
+    "code_style": "production",
+    "auto_debug": true,
+    "auto_validate": true
+  },
+  "display": {
+    "show_token_usage": true,
+    "show_timestamps": true,
+    "show_agent_transitions": true,
+    "color_theme": "default",
+    "progress_bars": true
+  },
+  "safety": {
+    "require_confirmation_for_execution": true,
+    "max_file_size_mb": 10,
+    "allowed_file_types": [".py", ".txt", ".json", ".md", ".csv"]
+  }
+}
