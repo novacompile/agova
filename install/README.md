@@ -7,7 +7,7 @@ Install for either Linux/Mac (bash) or Windows (bat).
 ### Linux / Mac
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/agova.git
+git clone https://github.com/novacompile/agova.git
 cd agova
 
 # Run the installer
