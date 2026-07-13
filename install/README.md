@@ -49,10 +49,12 @@ pip install -r requirements.txt
 
 2. Add to your shell configuration (~/.bashrc or ~/.zshrc):
 
+```bash
 alias agova='python3 /path/to/agova/main.py'
+```
 
 3. Reload your shell:
 
-```
+```bash
 source ~/.bashrc
 ```
