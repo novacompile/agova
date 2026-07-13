@@ -116,7 +116,7 @@ install\uninstall.bat
 
 ## Files & Locations
 
-|Component     |Location                                                |
+|Component     |Location                                                 |
 |--------------|---------------------------------------------------------|
 |Application   |~/.agova/ (Linux/Mac) or %USERPROFILE%\.agova\ (Windows) |
 |Configuration |~/.config/agova/config.json                              |
