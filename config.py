@@ -5,13 +5,19 @@ from typing import Optional
 
 class Config:
     # API Keys
-    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY", "your-key-here")
-    ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY", "")
+    GROQ_API_KEY: Optional[str] = os.getenv("GROQ_API_KEY", "your-key-here")
     
-    # Model settings
-    DEFAULT_MODEL: str = "gpt-4"
-    RESEARCH_MODEL: str = "gpt-4"
-    CODING_MODEL: str = "gpt-4"
+    # Model settings - Groq models
+    DEFAULT_MODEL: str = "mixtral-8x7b-32768"  # Fast and capable
+    RESEARCH_MODEL: str = "mixtral-8x7b-32768"  # Good for research tasks
+    CODING_MODEL: str = "llama-3.1-70b-versatile"  # Better for coding
+    VALIDATION_MODEL: str = "llama-3.1-70b-versatile"  # For validation
+    DEBUG_MODEL: str = "llama-3.1-70b-versatile"  # For debugging
+    
+    # Available Groq models: 
+    # - mixtral-8x7b-32768 (fast, good all-rounder)
+    # - llama-3.1-70b-versatile (powerful, great for complex tasks)
+    # - llama-3.1-8b-instant (fastest, good for simple tasks)
     
     # Workspace settings
     WORKSPACE_DIR: Path = Path("workspace")
@@ -19,7 +25,7 @@ class Config:
     # Agent settings
     MAX_RETRIES: int = 3
     TEMPERATURE: float = 0.7
-    MAX_TOKENS: int = 4096
+    MAX_TOKENS: int = 8192  # Groq supports larger context
     
     # File tree settings
     ENABLE_FILE_TREE: bool = True
@@ -27,6 +33,6 @@ class Config:
     @classmethod
     def validate(cls):
         """Validate configuration"""
-        if not cls.OPENAI_API_KEY or cls.OPENAI_API_KEY == "your-key-here":
-            raise ValueError("Please set OPENAI_API_KEY environment variable")
+        if not cls.GROQ_API_KEY or cls.GROQ_API_KEY == "your-key-here":
+            raise ValueError("Please set GROQ_API_KEY environment variable")
         cls.WORKSPACE_DIR.mkdir(exist_ok=True)
