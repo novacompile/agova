@@ -1,20 +1,21 @@
 @echo off
 REM ###############################################################################
-REM # Agova AI Agent System - Installation Script (Windows)
-REM # This script installs Agova system-wide and creates the 'agova' command
+REM # Agova AI Agent System - Simple Installation Script (Windows)
 REM ###############################################################################
 
 setlocal enabledelayedexpansion
 
-set "APP_NAME=agova"
-set "INSTALL_DIR=%USERPROFILE%\.agova"
-set "CONFIG_DIR=%USERPROFILE%\.config\agova"
-set "WORKSPACE_DIR=%USERPROFILE%\agova_workspace"
+REM Get the directory where the install script is located
+set "SCRIPT_DIR=%~dp0"
+cd "%SCRIPT_DIR%.."
+set "AGOVA_DIR=%CD%"
 
 echo.
 echo ========================================
-echo     Agova AI Agent System Installer
+echo    Agova AI Agent System Installer
 echo ========================================
+echo.
+echo Installing Agova from: %AGOVA_DIR%
 echo.
 
 REM Check Python
@@ -36,155 +37,81 @@ if errorlevel 1 (
 )
 echo [OK] pip found
 
-REM Check git
-git --version >nul 2>&1
-if errorlevel 1 (
-    echo [ERROR] Git is not installed. Please install Git.
-    pause
-    exit /b 1
-)
-echo [OK] Git found
-
-REM Create directories
-echo Creating directories...
-if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
-if not exist "%CONFIG_DIR%" mkdir "%CONFIG_DIR%"
-if not exist "%WORKSPACE_DIR%" mkdir "%WORKSPACE_DIR%"
-echo [OK] Directories created
-
-REM Clone or copy repository
-echo Setting up Agova...
-if exist "%INSTALL_DIR%\main.py" (
-    echo Existing installation found. Updating...
-    cd /d "%INSTALL_DIR%"
-    git pull origin main 2>nul || git pull origin master 2>nul
-) else (
-    echo Copying Agova files...
-    if exist "..\main.py" (
-        echo Installing from local source...
-        xcopy /E /I /Y "..\*" "%INSTALL_DIR%"
-    ) else (
-        echo Cloning from GitHub...
-        echo Please enter repository URL or press Enter to skip:
-        set /p REPO_URL="Repository URL: "
-        if not "!REPO_URL!"=="" (
-            git clone "!REPO_URL!" "%INSTALL_DIR%"
-        ) else (
-            echo [WARNING] No repository URL provided. Please copy files manually.
-        )
-    )
-)
-echo [OK] Repository set up
-
-REM Install Python dependencies
-echo Installing Python dependencies...
-cd /d "%INSTALL_DIR%"
-
-if not exist "venv" (
-    python -m venv venv
-    echo [OK] Virtual environment created
-)
-
-call venv\Scripts\activate
-pip install --upgrade pip >nul 2>&1
+REM Install dependencies
+echo Installing dependencies...
+cd /d "%AGOVA_DIR%"
 pip install -r requirements.txt >nul 2>&1
 echo [OK] Dependencies installed
 
-REM Create launcher script
-echo Creating launcher script...
+REM Create workspace directory
+if not exist "workspace" mkdir workspace
+echo [OK] Workspace directory created
+
+REM Create launcher batch file
+echo Creating launcher...
 (
 echo @echo off
-echo set "AGOVA_HOME=%USERPROFILE%\.agova"
-echo set "AGOVA_VENV=%AGOVA_HOME%\venv"
-echo set "AGOVA_MAIN=%AGOVA_HOME%\main.py"
-echo.
-echo if not exist "%%AGOVA_MAIN%%" (
-echo     echo Agova is not properly installed.
-echo     echo Please run the install script again.
-echo     exit /b 1
-echo )
-echo.
-echo if not exist "%%AGOVA_VENV%%\Scripts\activate" (
-echo     echo Virtual environment not found. Reinstalling dependencies...
-echo     cd /d "%%AGOVA_HOME%%"
-echo     python -m venv venv
-echo     call venv\Scripts\activate
-echo     pip install -r requirements.txt
-echo )
-echo.
-echo call "%%AGOVA_VENV%%\Scripts\activate"
-echo python "%%AGOVA_MAIN%%" %%*
-) > "%INSTALL_DIR%\agova_launcher.bat"
-echo [OK] Launcher script created
+echo set "AGOVA_DIR=%AGOVA_DIR%"
+echo python "%%AGOVA_DIR%%\main.py" %%*
+) > "%AGOVA_DIR%\agova.bat"
+echo [OK] Launcher created
 
-REM Create system-wide command
-echo Setting up 'agova' command...
-
-REM Method 1: Add to PATH using setx
-set "PATH_TO_ADD=%INSTALL_DIR%"
+REM Add to system PATH
+echo Adding to system PATH...
+set "PATH_TO_ADD=%AGOVA_DIR%"
 setx PATH "%PATH%;%PATH_TO_ADD%" >nul 2>&1
-echo [OK] Added to system PATH
+echo [OK] Added to PATH
 
-REM Method 2: Create batch file in Windows directory
-if exist "C:\Windows\System32" (
-    (
-    echo @echo off
-    echo call "%INSTALL_DIR%\agova_launcher.bat" %%*
-    ) > "C:\Windows\System32\agova.bat" 2>nul
-    if not errorlevel 1 echo [OK] Created system-wide command
-)
+REM Create PowerShell alias
+echo Creating PowerShell alias...
+powershell -Command "
+    $profileDir = Split-Path $PROFILE -Parent
+    if (!(Test-Path $profileDir)) {
+        New-Item -ItemType Directory -Force -Path $profileDir | Out-Null
+    }
+    $aliasLine = 'function agova { python \"%AGOVA_DIR%\main.py\" @args }'
+    if (Test-Path $PROFILE) {
+        $content = Get-Content $PROFILE -Raw
+        if ($content -notmatch 'function agova') {
+            Add-Content $PROFILE \"`n# Agova AI Agent System\"
+            Add-Content $PROFILE $aliasLine
+        }
+    } else {
+        \"# Agova AI Agent System\" | Out-File $PROFILE
+        $aliasLine | Out-File $PROFILE -Append
+    }
+" >nul 2>&1
+echo [OK] PowerShell alias created
 
-REM Method 3: Create alias using doskey
+REM Create Command Prompt doskey macro
 (
 echo @echo off
 echo REM Agova AI Agent System
-echo doskey agova=call "%INSTALL_DIR%\agova_launcher.bat" $*
-) >> "%USERPROFILE%\agova_aliases.bat"
+echo doskey agova=python "%AGOVA_DIR%\main.py" $*
+) > "%USERPROFILE%\agova_aliases.bat"
 
-REM Add to registry for auto-start
+REM Add to registry for Command Prompt auto-run
 reg add "HKCU\Software\Microsoft\Command Processor" /v AutoRun /t REG_SZ /d "%USERPROFILE%\agova_aliases.bat" /f >nul 2>&1
-
-echo [OK] Created command alias
-
-REM Setup config
-echo Setting up configuration...
-if exist "%INSTALL_DIR%\config.json" (
-    if not exist "%CONFIG_DIR%\config.json" (
-        copy "%INSTALL_DIR%\config.json" "%CONFIG_DIR%\config.json" >nul
-        echo [OK] Default configuration created
-    ) else (
-        echo [OK] Existing configuration preserved
-    )
-)
-
-REM Create Start Menu shortcut
-echo Creating Start Menu shortcut...
-set "START_MENU=%APPDATA%\Microsoft\Windows\Start Menu\Programs"
-if exist "%START_MENU%" (
-    powershell -Command "$WS = New-Object -ComObject WScript.Shell; $SC = $WS.CreateShortcut('%START_MENU%\Agova.lnk'); $SC.TargetPath = '%INSTALL_DIR%\agova_launcher.bat'; $SC.WorkingDirectory = '%INSTALL_DIR%'; $SC.Description = 'Agova AI Agent System'; $SC.Save()"
-    echo [OK] Start Menu shortcut created
-)
+echo [OK] Command Prompt alias created
 
 echo.
 echo ========================================
 echo    Installation Complete!
 echo ========================================
 echo.
+echo Agova is now installed!
+echo.
 echo To start using Agova:
 echo.
-echo 1. Restart your terminal OR run:
-echo    agova
+echo 1. Close and reopen your terminal
 echo.
-echo 2. First time setup:
-echo    - Configure your API key: agova --setup
-echo    - Or edit config: %CONFIG_DIR%\config.json
+echo 2. Run: agova
 echo.
-echo Quick Commands:
+echo Quick commands:
 echo   agova              - Start the application
 echo   agova --setup      - Run configuration wizard
-echo   agova --help       - Show help
 echo.
-echo Workspace: %WORKSPACE_DIR%
-echo Config: %CONFIG_DIR%\config.json
+echo Installation directory: %AGOVA_DIR%
+echo Config file: %AGOVA_DIR%\config.json
 echo.
 pause
