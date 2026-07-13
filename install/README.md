@@ -58,3 +58,41 @@ alias agova='python3 /path/to/agova/main.py'
 ```bash
 source ~/.bashrc
 ```
+
+### Windows
+
+1. Install dependencies:
+
+```batch
+pip install -r requirements.txt
+```
+
+2. Create a batch file agova.bat in a directory in your PATH:
+
+```batch
+@echo off
+python C:\path\to\agova\main.py %*
+```
+ 
+##  First-Time Setup
+
+1. Get a free Groq API key at https://console.groq.com/keys
+2. Run the configuration wizard:
+
+```bash
+agova --setup
+```
+
+3. Or manually edit the config file at `~/.config/agova/config.json`
+
+Usage
+
+bash
+# Start Agova
+agova
+
+# Run setup wizard
+agova --setup
+
+# Show help
+agova --help
