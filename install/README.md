@@ -85,9 +85,9 @@ agova --setup
 
 3. Or manually edit the config file at `~/.config/agova/config.json`
 
-Usage
+## Usage
 
-bash
+```bash
 # Start Agova
 agova
 
@@ -96,3 +96,5 @@ agova --setup
 
 # Show help
 agova --help
+```
+
