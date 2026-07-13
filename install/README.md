@@ -103,3 +103,22 @@ agova --help
 Follow these steps based on your operating system, to uninstall agova.
 
 ### Linux / Mac
+
+```bash
+./install/uninstall.sh
+```
+
+### Windows
+
+```bash
+install\uninstall.bat
+```
+
+## Files & Locations
+
+|Component     |Location                                                |
+|--------------|---------------------------------------------------------|
+|Application   |~/.agova/ (Linux/Mac) or %USERPROFILE%\.agova\ (Windows) |
+|Configuration |~/.config/agova/config.json                              |
+|Workspace     |~/agova_workspace/                                       |
+|Logs          |~/.agova/logs/                                           |
