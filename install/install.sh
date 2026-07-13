@@ -1,6 +1,7 @@
 #!/bin/bash
 ###############################################################################
-# Agova AI Agent System - Simple Installation Script (Linux/Mac)
+# Agova AI Agent System - Installation Script (Linux/Mac)
+# Simple, reliable installation that just works
 ###############################################################################
 
 set -e
@@ -26,18 +27,19 @@ print_header() {
 
 # Get the directory where the install script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Agova directory is one level up from install/
 AGOVA_DIR="$(dirname "$SCRIPT_DIR")"
 
 print_header
 
-print_message "📦 Installing Agova from: $AGOVA_DIR" "$BLUE"
+print_message "📦 Agova directory: $AGOVA_DIR" "$BLUE"
 
 # Check Python
 if ! command -v python3 &> /dev/null; then
     print_message "❌ Python 3 is not installed. Please install Python 3.8 or higher." "$RED"
     exit 1
 fi
-print_message "✅ Python 3 found" "$GREEN"
+print_message "✅ Python 3 found: $(python3 --version)" "$GREEN"
 
 # Check pip
 if ! command -v pip3 &> /dev/null; then
@@ -49,72 +51,58 @@ print_message "✅ pip3 found" "$GREEN"
 # Install dependencies
 print_message "📥 Installing dependencies..." "$BLUE"
 cd "$AGOVA_DIR"
-pip3 install -r requirements.txt > /dev/null 2>&1
+pip3 install -r requirements.txt
 print_message "✅ Dependencies installed" "$GREEN"
 
-# Create workspace directory
-mkdir -p workspace
-print_message "✅ Workspace directory created" "$GREEN"
+# Create workspace directory if it doesn't exist
+mkdir -p "$AGOVA_DIR/workspace"
+print_message "✅ Workspace directory ready" "$GREEN"
 
-# Determine which shell config file to use
+# Determine shell config file
 SHELL_CONFIG=""
-if [ -n "$ZSH_VERSION" ] || [ "$SHELL" = "/bin/zsh" ] || [ "$SHELL" = "/usr/bin/zsh" ]; then
+if [ -n "$ZSH_VERSION" ] || [[ "$SHELL" == *"zsh"* ]]; then
     SHELL_CONFIG="$HOME/.zshrc"
-elif [ -n "$BASH_VERSION" ] || [ "$SHELL" = "/bin/bash" ] || [ "$SHELL" = "/usr/bin/bash" ]; then
-    if [ -f "$HOME/.bashrc" ]; then
-        SHELL_CONFIG="$HOME/.bashrc"
-    elif [ -f "$HOME/.bash_profile" ]; then
-        SHELL_CONFIG="$HOME/.bash_profile"
-    else
-        SHELL_CONFIG="$HOME/.bashrc"
-    fi
+elif [ -n "$BASH_VERSION" ] || [[ "$SHELL" == *"bash"* ]]; then
+    SHELL_CONFIG="$HOME/.bashrc"
 else
     # Default to .bashrc
     SHELL_CONFIG="$HOME/.bashrc"
 fi
 
-print_message "🔧 Using shell config: $SHELL_CONFIG" "$YELLOW"
+print_message "🔧 Shell config: $SHELL_CONFIG" "$YELLOW"
 
-# Remove any existing agova alias
+# Remove any existing agova aliases
 if [ -f "$SHELL_CONFIG" ]; then
-    # Remove old alias lines
-    sed -i '/# Agova AI Agent System/d' "$SHELL_CONFIG" 2>/dev/null || true
-    sed -i '/alias agova=/d' "$SHELL_CONFIG" 2>/dev/null || true
+    # Create temp file without old agova lines
+    grep -v "alias agova=" "$SHELL_CONFIG" > "${SHELL_CONFIG}.tmp" 2>/dev/null || true
+    grep -v "Agova AI Agent System" "${SHELL_CONFIG}.tmp" > "$SHELL_CONFIG" 2>/dev/null || true
+    rm -f "${SHELL_CONFIG}.tmp"
 fi
 
-# Add the alias
+# Add the correct alias
 echo "" >> "$SHELL_CONFIG"
 echo "# Agova AI Agent System" >> "$SHELL_CONFIG"
 echo "alias agova=\"python3 $AGOVA_DIR/main.py\"" >> "$SHELL_CONFIG"
 
-print_message "✅ Added alias to $SHELL_CONFIG" "$GREEN"
+print_message "✅ Alias added to $SHELL_CONFIG" "$GREEN"
 
-# Also create a symlink in /usr/local/bin if possible (for system-wide access)
+# Also create symlink in /usr/local/bin for system-wide access
+print_message "🔗 Creating system-wide command..." "$BLUE"
 if [ -d "/usr/local/bin" ]; then
-    # Create a wrapper script in the agova directory
-    cat > "$AGOVA_DIR/agova" << 'WRAPPER_EOF'
+    sudo ln -sf "$AGOVA_DIR/agova.sh" /usr/local/bin/agova 2>/dev/null && {
+        print_message "✅ System-wide 'agova' command created" "$GREEN"
+    } || {
+        print_message "⚠️  Skipping symlink (will use alias instead)" "$YELLOW"
+    }
+fi
+
+# Create agova.sh wrapper in agova directory
+cat > "$AGOVA_DIR/agova.sh" << 'EOF'
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 python3 "$SCRIPT_DIR/main.py" "$@"
-WRAPPER_EOF
-    
-    chmod +x "$AGOVA_DIR/agova"
-    
-    # Try to create symlink (may need sudo)
-    if [ -w "/usr/local/bin" ]; then
-        ln -sf "$AGOVA_DIR/agova" /usr/local/bin/agova 2>/dev/null || true
-        print_message "✅ Created system-wide symlink" "$GREEN"
-    else
-        print_message "🔒 Creating symlink with sudo..." "$YELLOW"
-        sudo ln -sf "$AGOVA_DIR/agova" /usr/local/bin/agova 2>/dev/null || {
-            print_message "⚠️  Could not create symlink (will use alias instead)" "$YELLOW"
-        }
-    fi
-fi
-
-# Source the shell config
-print_message "🔄 Reloading shell configuration..." "$BLUE"
-source "$SHELL_CONFIG" 2>/dev/null || true
+EOF
+chmod +x "$AGOVA_DIR/agova.sh"
 
 # Print completion
 echo ""
@@ -126,9 +114,8 @@ echo -e "${CYAN}Agova is now installed!${NC}"
 echo ""
 echo -e "${YELLOW}To start using Agova:${NC}"
 echo ""
-echo -e "1. ${GREEN}Restart your terminal${NC}"
-echo -e "   ${YELLOW}OR${NC}"
-echo -e "   Run: ${GREEN}source $SHELL_CONFIG${NC}"
+echo -e "1. ${GREEN}Reload your shell:${NC}"
+echo -e "   ${CYAN}source $SHELL_CONFIG${NC}"
 echo ""
 echo -e "2. ${GREEN}Start Agova:${NC}"
 echo -e "   ${CYAN}agova${NC}"
@@ -140,3 +127,6 @@ echo -e ""
 echo -e "${CYAN}Installation directory:${NC} $AGOVA_DIR"
 echo -e "${CYAN}Config file:${NC} $AGOVA_DIR/config.json"
 echo ""
+
+# Try to source the shell config
+source "$SHELL_CONFIG" 2>/dev/null || true
