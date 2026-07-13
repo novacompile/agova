@@ -5,6 +5,7 @@ Configures the JSON-based settings for your multi-agent AI application
 """
 import json
 import sys
+import os
 from pathlib import Path
 from rich.console import Console
 from rich.prompt import Prompt, Confirm, IntPrompt, FloatPrompt
@@ -12,15 +13,70 @@ from rich.panel import Panel
 from rich.table import Table
 from rich import print as rprint
 from typing import Dict, Any
-from utils.config_manager import ConfigManager
 
 console = Console()
 
 class SetupWizard:
     def __init__(self):
-        self.config_manager = ConfigManager()
-        self.config = self.config_manager.config
+        self.config_path = Path("config.json")
+        self.config = self.load_config()
         
+    def load_config(self) -> Dict[str, Any]:
+        """Load existing config or return default"""
+        if self.config_path.exists():
+            try:
+                with open(self.config_path, 'r') as f:
+                    return json.load(f)
+            except:
+                pass
+        
+        return {
+            "api": {
+                "groq_api_key": "",
+                "provider": "groq"
+            },
+            "models": {
+                "default": "mixtral-8x7b-32768",
+                "researcher": "mixtral-8x7b-32768",
+                "coder": "llama-3.1-70b-versatile",
+                "validator": "llama-3.1-70b-versatile",
+                "debugger": "llama-3.1-70b-versatile"
+            },
+            "workspace": {
+                "directory": "workspace",
+                "enable_file_tree": True,
+                "auto_cleanup": False,
+                "max_workspace_age_days": 30
+            },
+            "agents": {
+                "max_retries": 3,
+                "temperature": 0.7,
+                "max_tokens": 8192,
+                "research_depth": "detailed",
+                "code_style": "production",
+                "auto_debug": True,
+                "auto_validate": True
+            },
+            "display": {
+                "show_token_usage": True,
+                "show_timestamps": True,
+                "show_agent_transitions": True,
+                "color_theme": "default",
+                "progress_bars": True
+            },
+            "safety": {
+                "require_confirmation_for_execution": True,
+                "max_file_size_mb": 10,
+                "allowed_file_types": [".py", ".txt", ".json", ".md", ".csv"]
+            }
+        }
+    
+    def save_config(self):
+        """Save configuration to file"""
+        with open(self.config_path, 'w') as f:
+            json.dump(self.config, f, indent=2)
+        console.print(f"[green]✅ Configuration saved to {self.config_path}[/green]")
+    
     def run(self):
         """Run the setup wizard"""
         console.print(Panel.fit(
@@ -61,12 +117,14 @@ class SetupWizard:
             elif choice == "5":
                 self.setup_display()
             elif choice == "6":
-                self.config_manager.display_config()
+                self.display_config()
             elif choice == "7":
-                self.save_and_exit()
+                self.save_config()
+                console.print("\n[bold green]✅ Setup complete! Run 'python main.py' to start.[/bold green]")
                 break
             elif choice == "8":
                 if Confirm.ask("Exit without saving changes?"):
+                    console.print("[yellow]Exiting without saving.[/yellow]")
                     break
     
     def setup_api_key(self):
@@ -74,7 +132,7 @@ class SetupWizard:
         console.print("\n[bold cyan]🔑 API KEY SETUP[/bold cyan]")
         console.print("[dim]Get your free API key at: https://console.groq.com/keys[/dim]\n")
         
-        current_key = self.config_manager.get("api.groq_api_key")
+        current_key = self.config["api"].get("groq_api_key", "")
         if current_key:
             masked_key = current_key[:10] + "..." + current_key[-4:] if len(current_key) > 14 else "***"
             console.print(f"[yellow]Current key: {masked_key}[/yellow]")
@@ -123,35 +181,29 @@ class SetupWizard:
             console.print(f"\n[yellow]{description}[/yellow]")
             console.print(f"Current: [cyan]{current}[/cyan]")
             
-            use_default = Confirm.ask(
-                f"Keep current model for {agent_key}?",
-                default=True
+            if not Confirm.ask(f"Change model for {agent_key}?", default=False):
+                continue
+            
+            model_list = list(available_models.keys())
+            console.print("\nSelect model:")
+            for i, model in enumerate(model_list, 1):
+                console.print(f"  {i}. {model}")
+            
+            choice = Prompt.ask(
+                "Enter number",
+                choices=[str(i) for i in range(1, len(model_list) + 1)],
+                default="1"
             )
             
-            if not use_default:
-                model_list = list(available_models.keys())
-                console.print("\nSelect model:")
-                for i, model in enumerate(model_list, 1):
-                    console.print(f"  {i}. {model}")
-                
-                choice = Prompt.ask(
-                    "Enter number",
-                    choices=[str(i) for i in range(1, len(model_list) + 1)],
-                    default="1"
-                )
-                
-                self.config["models"][agent_key] = model_list[int(choice) - 1]
-                console.print(f"[green]✅ Set {agent_key} to {model_list[int(choice) - 1]}[/green]")
+            self.config["models"][agent_key] = model_list[int(choice) - 1]
+            console.print(f"[green]✅ Set {agent_key} to {model_list[int(choice) - 1]}[/green]")
     
     def setup_workspace(self):
         """Configure workspace settings"""
         console.print("\n[bold cyan]📁 WORKSPACE SETTINGS[/bold cyan]")
         
         current_dir = self.config["workspace"]["directory"]
-        new_dir = Prompt.ask(
-            "Workspace directory name",
-            default=current_dir
-        )
+        new_dir = Prompt.ask("Workspace directory name", default=current_dir)
         self.config["workspace"]["directory"] = new_dir
         
         enable_tree = Confirm.ask(
@@ -287,20 +339,39 @@ class SetupWizard:
         
         console.print("[green]✅ Display preferences updated![/green]")
     
-    def save_and_exit(self):
-        """Save configuration and exit"""
-        self.config_manager.config = self.config
-        self.config_manager.save_config()
+    def display_config(self):
+        """Display current configuration"""
+        print("\n" + "="*50)
+        print("🔧 CURRENT CONFIGURATION")
+        print("="*50)
         
-        console.print("\n[bold green]✅ Configuration saved to config.json![/bold green]")
+        api_key = self.config["api"].get("groq_api_key", "")
+        if api_key:
+            masked = api_key[:10] + "..." + api_key[-4:] if len(api_key) > 14 else "***"
+            print(f"🔑 API Key: ✅ Set ({masked})")
+        else:
+            print(f"🔑 API Key: ❌ Not set")
         
-        # Validate
-        try:
-            self.config_manager.validate()
-            console.print("[green]✅ Configuration validated successfully![/green]")
-            console.print("\n[bold cyan]You can now run:[/bold cyan] python main.py")
-        except ValueError as e:
-            console.print(f"[yellow]⚠️  Warning: {str(e)}[/yellow]")
+        print(f"☁️  Provider: {self.config['api']['provider']}")
+        
+        print("\n🤖 Models:")
+        for model_type in ['default', 'researcher', 'coder', 'validator', 'debugger']:
+            print(f"   • {model_type}: {self.config['models'][model_type]}")
+        
+        print(f"\n📁 Workspace: {self.config['workspace']['directory']}")
+        print(f"🌳 File Tree: {'✅ Enabled' if self.config['workspace']['enable_file_tree'] else '❌ Disabled'}")
+        
+        print(f"\n⚙️  Agent Settings:")
+        print(f"   • Max Retries: {self.config['agents']['max_retries']}")
+        print(f"   • Temperature: {self.config['agents']['temperature']}")
+        print(f"   • Max Tokens: {self.config['agents']['max_tokens']}")
+        print(f"   • Research Depth: {self.config['agents']['research_depth']}")
+        print(f"   • Code Style: {self.config['agents']['code_style']}")
+        
+        print(f"\n🎨 Display:")
+        print(f"   • Token Usage: {'✅' if self.config['display']['show_token_usage'] else '❌'}")
+        print(f"   • Timestamps: {'✅' if self.config['display']['show_timestamps'] else '❌'}")
+        print("="*50 + "\n")
 
 def main():
     """Main setup function"""
