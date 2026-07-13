@@ -3,34 +3,33 @@
 # Agova AI Agent System - Uninstall Script (Linux/Mac)
 ###############################################################################
 
-set -e
-
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m'
-
-APP_NAME="agova"
-INSTALL_DIR="$HOME/.agova"
-BIN_DIR="/usr/local/bin"
-CONFIG_DIR="$HOME/.config/agova"
 
 print_message() {
     echo -e "${2}${1}${NC}"
 }
 
-print_message "========================================" "$BLUE"
-print_message "   Agova AI Agent System Uninstaller    " "$BLUE"
-print_message "========================================" "$BLUE"
-echo ""
+print_header() {
+    echo ""
+    echo -e "${CYAN}========================================${NC}"
+    echo -e "${CYAN}    Agova AI Agent System Uninstaller   ${NC}"
+    echo -e "${CYAN}========================================${NC}"
+    echo ""
+}
 
-# Confirm uninstall
+# Get the agova directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AGOVA_DIR="$(dirname "$SCRIPT_DIR")"
+
+print_header
+
 print_message "⚠️  This will remove Agova from your system." "$YELLOW"
-print_message "This includes:" "$YELLOW"
-echo "  - Application files in $INSTALL_DIR"
-echo "  - System command: $APP_NAME"
-echo "  - Configuration in $CONFIG_DIR"
+print_message "Agova directory: $AGOVA_DIR" "$YELLOW"
 echo ""
 read -p "Are you sure you want to continue? (y/N): " CONFIRM
 
@@ -39,67 +38,28 @@ if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-# Remove system command
+# Remove symlink
 print_message "Removing system command..." "$BLUE"
-if [ -f "$BIN_DIR/$APP_NAME" ]; then
-    if [ -w "$BIN_DIR" ]; then
-        rm -f "$BIN_DIR/$APP_NAME"
-    else
-        sudo rm -f "$BIN_DIR/$APP_NAME"
-    fi
-    print_message "✅ Removed system command" "$GREEN"
-fi
+sudo rm -f /usr/local/bin/agova 2>/dev/null || true
+print_message "✅ Removed system command" "$GREEN"
 
-# Remove alias from shell config
+# Remove alias from shell configs
 for SHELL_CONFIG in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.zshrc"; do
     if [ -f "$SHELL_CONFIG" ]; then
-        sed -i '/# Agova AI Agent System/d' "$SHELL_CONFIG" 2>/dev/null || true
-        sed -i '/alias agova=/d' "$SHELL_CONFIG" 2>/dev/null || true
+        grep -v "alias agova=" "$SHELL_CONFIG" > "${SHELL_CONFIG}.tmp" 2>/dev/null || true
+        grep -v "Agova AI Agent System" "${SHELL_CONFIG}.tmp" > "$SHELL_CONFIG" 2>/dev/null || true
+        rm -f "${SHELL_CONFIG}.tmp"
     fi
 done
 print_message "✅ Removed shell aliases" "$GREEN"
 
-# Remove desktop entry
-DESKTOP_FILE="$HOME/.local/share/applications/agova.desktop"
-if [ -f "$DESKTOP_FILE" ]; then
-    rm -f "$DESKTOP_FILE"
-    print_message "✅ Removed desktop entry" "$GREEN"
-fi
-
-# Backup and remove config
-if [ -d "$CONFIG_DIR" ]; then
-    read -p "Do you want to backup your configuration? (y/N): " BACKUP_CONFIG
-    if [[ "$BACKUP_CONFIG" =~ ^[Yy]$ ]]; then
-        BACKUP_DIR="$HOME/agova_backup_$(date +%Y%m%d_%H%M%S)"
-        mkdir -p "$BACKUP_DIR"
-        cp -r "$CONFIG_DIR" "$BACKUP_DIR/"
-        print_message "✅ Configuration backed up to $BACKUP_DIR" "$GREEN"
-    fi
-    rm -rf "$CONFIG_DIR"
-    print_message "✅ Removed configuration" "$GREEN"
-fi
-
-# Remove installation directory
-if [ -d "$INSTALL_DIR" ]; then
-    read -p "Do you want to keep the virtual environment? (y/N): " KEEP_VENV
-    if [[ ! "$KEEP_VENV" =~ ^[Yy]$ ]]; then
-        rm -rf "$INSTALL_DIR"
-        print_message "✅ Removed installation directory" "$GREEN"
-    else
-        print_message "✅ Kept virtual environment" "$GREEN"
-    fi
-fi
-
-# Ask about workspace
-WORKSPACE_DIR="$HOME/agova_workspace"
-if [ -d "$WORKSPACE_DIR" ]; then
-    read -p "Do you want to remove the workspace? This will delete all generated files! (y/N): " REMOVE_WORKSPACE
-    if [[ "$REMOVE_WORKSPACE" =~ ^[Yy]$ ]]; then
-        rm -rf "$WORKSPACE_DIR"
-        print_message "✅ Removed workspace" "$GREEN"
-    else
-        print_message "✅ Kept workspace at $WORKSPACE_DIR" "$GREEN"
-    fi
+# Ask about removing the directory
+read -p "Do you want to remove the Agova directory? ($AGOVA_DIR) (y/N): " REMOVE_DIR
+if [[ "$REMOVE_DIR" =~ ^[Yy]$ ]]; then
+    rm -rf "$AGOVA_DIR"
+    print_message "✅ Removed Agova directory" "$GREEN"
+else
+    print_message "✅ Kept Agova directory" "$GREEN"
 fi
 
 echo ""
