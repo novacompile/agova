@@ -3,7 +3,6 @@ import json
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional
-import shutil
 
 class ConfigManager:
     def __init__(self, config_path: str = "config.json"):
@@ -137,7 +136,12 @@ class ConfigManager:
         print("="*50)
         
         api_key = self.get_api_key()
-        print(f"🔑 API Key: {'✅ Set (' + api_key[:20] + '...)' if api_key else '❌ Not set'}")
+        if api_key:
+            masked = api_key[:10] + "..." + api_key[-4:] if len(api_key) > 14 else "***"
+            print(f"🔑 API Key: ✅ Set ({masked})")
+        else:
+            print(f"🔑 API Key: ❌ Not set")
+        
         print(f"☁️  Provider: {self.get('api.provider', 'groq')}")
         
         print("\n🤖 Models:")
@@ -151,8 +155,13 @@ class ConfigManager:
         print(f"   • Max Retries: {self.get('agents.max_retries')}")
         print(f"   • Temperature: {self.get('agents.temperature')}")
         print(f"   • Max Tokens: {self.get('agents.max_tokens')}")
+        print(f"   • Research Depth: {self.get('agents.research_depth')}")
+        print(f"   • Code Style: {self.get('agents.code_style')}")
+        print(f"   • Auto Validate: {self.get('agents.auto_validate')}")
+        print(f"   • Auto Debug: {self.get('agents.auto_debug')}")
         
         print(f"\n🎨 Display:")
         print(f"   • Token Usage: {'✅' if self.get('display.show_token_usage') else '❌'}")
         print(f"   • Timestamps: {'✅' if self.get('display.show_timestamps') else '❌'}")
+        print(f"   • Agent Transitions: {'✅' if self.get('display.show_agent_transitions') else '❌'}")
         print("="*50 + "\n")
