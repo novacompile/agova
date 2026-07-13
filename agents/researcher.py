@@ -3,44 +3,72 @@ import groq
 from typing import Dict, Any
 from rich.console import Console
 from .base_agent import BaseAgent
-from config import Config
+from utils.config_manager import ConfigManager
 
 class ResearcherAgent(BaseAgent):
     def __init__(self, console: Console):
         super().__init__("Researcher", "Research and Information Gathering", console)
-        self.client = groq.Groq(api_key=Config.GROQ_API_KEY)
+        self.config_manager = ConfigManager()
+        self.client = self._initialize_client()
+    
+    def _initialize_client(self):
+        """Initialize the Groq client"""
+        api_key = self.config_manager.get_api_key()
+        if not api_key:
+            raise ValueError("Groq API key not configured")
+        return groq.Groq(api_key=api_key)
     
     async def execute(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Research the given query"""
         query = task.get("query", "")
-        self.log(f"🔍 Researching: {query}", "cyan")
+        research_depth = self.config_manager.get("agents.research_depth", "detailed")
         
-        research_prompt = f"""You are a research agent. Thoroughly research the following query and provide:
-1. Key facts and information
-2. Relevant sources (even if simulated)
-3. Important dates, names, and events
-4. Any code-relevant information if applicable
+        self.log(f"🔍 Researching: {query}", "cyan")
+        self.add_to_context("task", f"Research: {query}")
+        
+        depth_instructions = {
+            "basic": "Provide a quick overview with essential facts only.",
+            "detailed": "Provide comprehensive research with key facts, sources, and detailed information.",
+            "exhaustive": "Provide in-depth analysis with multiple perspectives, historical context, and thorough documentation."
+        }
+        
+        research_prompt = f"""You are a research agent. {depth_instructions.get(research_depth, depth_instructions['detailed'])}
 
 Query: {query}
 
-Provide comprehensive research findings. Be detailed and accurate."""
+Please provide:
+1. Key Facts and Information
+2. Important Dates, Names, and Events (if applicable)
+3. Relevant Context and Background
+4. Code-Relevant Information (if applicable)
+5. Sources and References (even if simulated)
+6. Summary of Findings
+
+Be thorough and accurate in your research."""
         
         try:
+            model = self.config_manager.get("models.researcher", "mixtral-8x7b-32768")
+            temperature = self.config_manager.get("agents.temperature", 0.7)
+            max_tokens = self.config_manager.get("agents.max_tokens", 8192)
+            
             response = self.client.chat.completions.create(
-                model=Config.RESEARCH_MODEL,
+                model=model,
                 messages=[
-                    {"role": "system", "content": "You are an expert researcher. Be thorough and accurate. Provide detailed, well-structured research findings."},
+                    {"role": "system", "content": "You are an expert researcher. Be thorough, accurate, and provide well-structured research findings."},
                     {"role": "user", "content": research_prompt}
                 ],
-                temperature=Config.TEMPERATURE,
-                max_tokens=Config.MAX_TOKENS
+                temperature=temperature,
+                max_tokens=max_tokens
             )
             
             research_results = response.choices[0].message.content
+            self.add_to_context("assistant", research_results)
+            self.add_to_history("research", {"status": "success"})
+            
             self.log("✅ Research complete", "green")
             
-            # Log token usage
-            self.log(f"📊 Tokens used: {response.usage.total_tokens}", "dim")
+            if self.config_manager.get("display.show_token_usage", True):
+                self.log(f"📊 Tokens: {response.usage.total_tokens} (P:{response.usage.prompt_tokens} C:{response.usage.completion_tokens})", "dim")
             
             return {
                 "status": "success",
@@ -54,4 +82,5 @@ Provide comprehensive research findings. Be detailed and accurate."""
             }
         except Exception as e:
             self.log(f"❌ Research failed: {str(e)}", "red")
-            return {"status": "error", "message": str(e)}
+            self.add_to_history("research", {"status": "error", "message": str(e)})
+            return {"status": "error", "message": str(e), "agent": "researcher"}
