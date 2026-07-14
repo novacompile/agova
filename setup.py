@@ -36,11 +36,11 @@ class SetupWizard:
                 "provider": "groq"
             },
             "models": {
-                "default": "mixtral-8x7b-32768",
-                "researcher": "mixtral-8x7b-32768",
-                "coder": "llama-3.1-70b-versatile",
-                "validator": "llama-3.1-70b-versatile",
-                "debugger": "llama-3.1-70b-versatile"
+                "default": "gpt-oss-120b",
+                "researcher": "gpt-oss-120b",
+                "coder": "gpt-oss-120b",
+                "validator": "gpt-oss-120b",
+                "debugger": "gpt-oss-120b"
             },
             "workspace": {
                 "directory": "workspace",
