@@ -1,6 +1,5 @@
 """Validator agent for code and solution validation - Using Groq API via requests"""
 import requests
-import json
 from typing import Dict, Any
 from rich.console import Console
 from .base_agent import BaseAgent
@@ -21,7 +20,7 @@ class ValidatorAgent(BaseAgent):
         }
         
         payload = {
-            "model": self.config_manager.get("models.validator", "llama-3.1-70b-versatile"),
+            "model": self.config_manager.get("models.validator", "llama-3.3-70b-versatile"),
             "messages": messages,
             "temperature": 0.3,
             "max_tokens": self.config_manager.get("agents.max_tokens", 8192)
@@ -29,7 +28,6 @@ class ValidatorAgent(BaseAgent):
         
         try:
             response = requests.post(self.base_url, headers=headers, json=payload, timeout=60)
-            
             if response.status_code == 200:
                 return response.json()
             else:
@@ -45,7 +43,7 @@ class ValidatorAgent(BaseAgent):
         
         self.log("🔍 Validating solution...", "yellow")
         
-        validation_prompt = f"""You are a validation expert. Verify that the following solution correctly addresses the original query.
+        validation_prompt = f"""You are a validation expert. Verify that the solution correctly addresses the original query.
 
 Original Query: {original_query}
 
@@ -53,32 +51,19 @@ Research Findings: {research}
 
 Generated Code/Solution: {code}
 
-Provide a detailed validation report with:
-
+Provide:
 1. ACCURACY ASSESSMENT (Score 1-10)
-   - Does it correctly answer the query?
-
 2. CODE CORRECTNESS
-   - Is the code syntactically correct and runnable?
-
-3. EDGE CASES
-   - Are edge cases handled?
-
+3. EDGE CASES HANDLED
 4. COMPLETENESS (Score 1-10)
-   - Does it fully address all requirements?
-
 5. BEST PRACTICES
-   - Does it follow coding standards?
-
-6. SUGGESTIONS FOR IMPROVEMENT
-
-7. FINAL VERDICT
-   - PASS or FAIL with detailed reason"""
+6. SUGGESTIONS
+7. FINAL VERDICT: PASS or FAIL with detailed reason"""
         
         try:
             data = self._call_api(
                 messages=[
-                    {"role": "system", "content": "You are a thorough validator and code reviewer. Be critical and precise."},
+                    {"role": "system", "content": "You are a thorough validator. Be critical and precise."},
                     {"role": "user", "content": validation_prompt}
                 ]
             )
@@ -89,7 +74,7 @@ Provide a detailed validation report with:
             passed = "FINAL VERDICT: PASS" in validation_results.upper() or "VERDICT: PASS" in validation_results.upper()
             
             if passed:
-                self.log("✅ Validation passed - Solution is correct!", "green")
+                self.log("✅ Validation passed!", "green")
             else:
                 self.log("⚠️ Validation failed - Improvements needed", "yellow")
             
