@@ -1,6 +1,5 @@
 """Debugger agent for fixing issues - Using Groq API via requests"""
 import requests
-import json
 from typing import Dict, Any
 from rich.console import Console
 from .base_agent import BaseAgent
@@ -21,7 +20,7 @@ class DebuggerAgent(BaseAgent):
         }
         
         payload = {
-            "model": self.config_manager.get("models.debugger", "llama-3.1-70b-versatile"),
+            "model": self.config_manager.get("models.debugger", "llama-3.3-70b-versatile"),
             "messages": messages,
             "temperature": 0.3,
             "max_tokens": self.config_manager.get("agents.max_tokens", 8192)
@@ -29,7 +28,6 @@ class DebuggerAgent(BaseAgent):
         
         try:
             response = requests.post(self.base_url, headers=headers, json=payload, timeout=60)
-            
             if response.status_code == 200:
                 return response.json()
             else:
@@ -42,44 +40,32 @@ class DebuggerAgent(BaseAgent):
         code = task.get("code", "")
         validation_results = task.get("validation_results", "")
         research_results = task.get("research_results", "")
-        original_query = task.get("query", "")
         
         self.log("🐛 Debugging and fixing issues...", "magenta")
         
-        debug_prompt = f"""You are an expert debugger. Analyze and fix all issues in the following code.
+        debug_prompt = f"""You are an expert debugger. Fix all issues.
 
-Original Query: {original_query}
-
-Current Code:
+Original Code:
 {code}
 
-Validation Results (Issues to Fix):
+Validation Results:
 {validation_results}
 
-Please provide:
+Research Context:
+{research_results}
 
+Provide:
 1. ISSUES IDENTIFIED
-   - Numbered list of all problems with severity
-
-2. FIXED CODE
-   - Complete, working code with all fixes applied
-   - Use ```python ``` blocks
-
+2. FIXED CODE in ```python ``` blocks
 3. CHANGES MADE
-   - Detailed explanation of each fix
-
 4. TESTING SUGGESTIONS
 
-Make sure the fixed code:
-- Addresses ALL identified issues
-- Is complete and immediately runnable
-- Includes proper error handling
-- Follows best practices"""
+Make sure the fixed code is complete and runnable."""
         
         try:
             data = self._call_api(
                 messages=[
-                    {"role": "system", "content": "You are an expert debugger and code fixer. Find and fix all issues thoroughly."},
+                    {"role": "system", "content": "You are an expert debugger. Find and fix all issues thoroughly."},
                     {"role": "user", "content": debug_prompt}
                 ]
             )
@@ -87,7 +73,7 @@ Make sure the fixed code:
             fixed_solution = data["choices"][0]["message"]["content"]
             usage = data["usage"]
             
-            self.log("✅ Debugging complete - All issues fixed!", "green")
+            self.log("✅ Debugging complete!", "green")
             
             return {
                 "status": "success",
