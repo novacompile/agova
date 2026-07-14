@@ -14,10 +14,20 @@ class ConfigManager:
         """Load configuration from JSON file"""
         if not self.config_path.exists():
             self.create_default_config()
+            return
         
         try:
             with open(self.config_path, 'r') as f:
-                self.config = json.load(f)
+                loaded_config = json.load(f)
+            
+            # Only use loaded config if it has an API key
+            if loaded_config and loaded_config.get("api", {}).get("groq_api_key"):
+                self.config = loaded_config
+            else:
+                # Keep loaded config but warn about missing API key
+                self.config = loaded_config
+                print("⚠️  API key not set in config.json. Run 'python setup.py' to configure.")
+                
         except json.JSONDecodeError:
             print("⚠️  Invalid config.json, creating default...")
             self.create_default_config()
@@ -30,11 +40,11 @@ class ConfigManager:
                 "provider": "groq"
             },
             "models": {
-                "default": "mixtral-8x7b-32768",
-                "researcher": "mixtral-8x7b-32768",
-                "coder": "llama-3.1-70b-versatile",
-                "validator": "llama-3.1-70b-versatile",
-                "debugger": "llama-3.1-70b-versatile"
+                "default": "openai/gpt-oss-120b",
+                "researcher": "openai/gpt-oss-120b",
+                "coder": "openai/gpt-oss-120b",
+                "validator": "openai/gpt-oss-120b",
+                "debugger": "openai/gpt-oss-120b"
             },
             "workspace": {
                 "directory": "workspace",
@@ -65,11 +75,13 @@ class ConfigManager:
             }
         }
         
-        with open(self.config_path, 'w') as f:
-            json.dump(default_config, f, indent=2)
+        # Only create default if config doesn't exist
+        if not self.config_path.exists():
+            with open(self.config_path, 'w') as f:
+                json.dump(default_config, f, indent=2)
+            print(f"✅ Created default config.json")
         
         self.config = default_config
-        print(f"✅ Created default config.json")
     
     def get(self, key: str, default: Any = None) -> Any:
         """Get a configuration value using dot notation"""
