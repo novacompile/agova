@@ -1,6 +1,5 @@
 """API handler for Groq using direct requests"""
 import requests
-import json
 from typing import Dict, Any, Optional, List
 from utils.config_manager import ConfigManager
 
@@ -13,7 +12,7 @@ class APIHandler:
     def make_request(
         self,
         messages: List[Dict[str, str]],
-        model: str = "mixtral-8x7b-32768",
+        model: str = "llama-3.3-70b-versatile",
         temperature: float = 0.7,
         max_tokens: int = 8192,
         retry_count: int = 0
