@@ -1,6 +1,5 @@
 """Coding agent for program generation - Using Groq API via requests"""
 import requests
-import json
 from typing import Dict, Any
 from rich.console import Console
 from .base_agent import BaseAgent
@@ -21,7 +20,7 @@ class CoderAgent(BaseAgent):
         }
         
         payload = {
-            "model": model or self.config_manager.get("models.coder", "llama-3.1-70b-versatile"),
+            "model": model or self.config_manager.get("models.coder", "llama-3.3-70b-versatile"),
             "messages": messages,
             "temperature": temperature or 0.5,
             "max_tokens": self.config_manager.get("agents.max_tokens", 8192)
@@ -29,7 +28,6 @@ class CoderAgent(BaseAgent):
         
         try:
             response = requests.post(self.base_url, headers=headers, json=payload, timeout=60)
-            
             if response.status_code == 200:
                 return response.json()
             else:
@@ -73,7 +71,7 @@ Important:
         try:
             data = self._call_api(
                 messages=[
-                    {"role": "system", "content": "You are an expert Python developer. Write clean, efficient, well-documented code. Always include complete, runnable code in your responses."},
+                    {"role": "system", "content": "You are an expert Python developer. Write clean, efficient, well-documented code."},
                     {"role": "user", "content": coding_prompt}
                 ]
             )
@@ -81,14 +79,10 @@ Important:
             code = data["choices"][0]["message"]["content"]
             usage = data["usage"]
             
-            # Extract code blocks
             code_blocks = self._extract_code_blocks(code)
             
             self.log("✅ Code generation complete", "green")
             self.log(f"📊 Extracted {len(code_blocks)} code block(s)", "dim")
-            
-            if self.config_manager.get("display.show_token_usage", True):
-                self.log(f"📊 Tokens: {usage['total_tokens']} (P:{usage['prompt_tokens']} C:{usage['completion_tokens']})", "dim")
             
             return {
                 "status": "success",
