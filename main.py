@@ -300,7 +300,7 @@ A powerful terminal-based AI application that coordinates multiple specialized a
 
 def check_dependencies():
     """Check if all required dependencies are installed"""
-    required_packages = ['groq', 'rich']
+    required_packages = ['requests', 'rich']
     missing_packages = []
     
     for package in required_packages:
