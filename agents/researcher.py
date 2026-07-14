@@ -48,24 +48,14 @@ class ResearcherAgent(BaseAgent):
             "exhaustive": "Provide in-depth analysis with multiple perspectives, historical context, and thorough documentation."
         }
         
-        research_prompt = f"""You are a research agent. {depth_instructions.get(research_depth, depth_instructions['detailed'])}
+        research_prompt = f"""Research this query thoroughly: {query}
 
-Query: {query}
-
-Please provide:
-1. Key Facts and Information
-2. Important Dates, Names, and Events (if applicable)
-3. Relevant Context and Background
-4. Code-Relevant Information (if applicable)
-5. Sources and References
-6. Summary of Findings
-
-Be thorough and accurate in your research."""
+Provide key facts, relevant context, and a summary of findings."""
         
         try:
             data = self._call_api(
                 messages=[
-                    {"role": "system", "content": "You are an expert researcher. Be thorough, accurate, and provide well-structured research findings."},
+                    {"role": "system", "content": "You are an expert researcher."},
                     {"role": "user", "content": research_prompt}
                 ]
             )

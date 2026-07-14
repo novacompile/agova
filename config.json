@@ -3,13 +3,12 @@
     "groq_api_key": "",
     "provider": "groq"
   },
-  {
   "models": {
-    "default": "gpt-oss-120b",
-    "researcher": "gpt-oss-120b",
-    "coder": "gpt-oss-120b",
-    "validator": "gpt-oss-120b",
-    "debugger": "gpt-oss-120b"
+    "default": "openai/gpt-oss-120b",
+    "researcher": "openai/gpt-oss-120b",
+    "coder": "openai/gpt-oss-120b",
+    "validator": "openai/gpt-oss-120b",
+    "debugger": "openai/gpt-oss-120b"
   },
   "workspace": {
     "directory": "workspace",
@@ -36,6 +35,12 @@
   "safety": {
     "require_confirmation_for_execution": true,
     "max_file_size_mb": 10,
-    "allowed_file_types": [".py", ".txt", ".json", ".md", ".csv"]
+    "allowed_file_types": [
+      ".py",
+      ".txt",
+      ".json",
+      ".md",
+      ".csv"
+    ]
   }
 }
