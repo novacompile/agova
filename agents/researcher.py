@@ -1,6 +1,5 @@
 """Research agent for gathering information - Using Groq API via requests"""
 import requests
-import json
 from typing import Dict, Any
 from rich.console import Console
 from .base_agent import BaseAgent
@@ -21,7 +20,7 @@ class ResearcherAgent(BaseAgent):
         }
         
         payload = {
-            "model": model or self.config_manager.get("models.researcher", "mixtral-8x7b-32768"),
+            "model": model or self.config_manager.get("models.researcher", "llama-3.3-70b-versatile"),
             "messages": messages,
             "temperature": temperature or self.config_manager.get("agents.temperature", 0.7),
             "max_tokens": self.config_manager.get("agents.max_tokens", 8192)
@@ -29,7 +28,6 @@ class ResearcherAgent(BaseAgent):
         
         try:
             response = requests.post(self.base_url, headers=headers, json=payload, timeout=60)
-            
             if response.status_code == 200:
                 return response.json()
             else:
