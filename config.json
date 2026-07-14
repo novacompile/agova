@@ -3,12 +3,13 @@
     "groq_api_key": "",
     "provider": "groq"
   },
+  {
   "models": {
-    "default": "mixtral-8x7b-32768",
-    "researcher": "mixtral-8x7b-32768",
-    "coder": "llama-3.1-70b-versatile",
-    "validator": "llama-3.1-70b-versatile",
-    "debugger": "llama-3.1-70b-versatile"
+    "default": "llama-3.3-70b-versatile",
+    "researcher": "llama-3.3-70b-versatile",
+    "coder": "llama-3.3-70b-versatile",
+    "validator": "llama-3.3-70b-versatile",
+    "debugger": "llama-3.3-70b-versatile"
   },
   "workspace": {
     "directory": "workspace",
