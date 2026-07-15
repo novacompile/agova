@@ -1,1 +1,0 @@
-PASS – The code defines a `main` function that correctly prints "Hello, World!" and calls it when the script is run as the main module. It follows proper Python syntax and will execute without errors.
