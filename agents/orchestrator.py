@@ -30,8 +30,10 @@ class OrchestratorAgent(BaseAgent):
         self.log(f"🚀 Starting workflow for: '{query}'", "bold blue")
         self.add_to_context("task", f"Orchestration: {query}")
         
-        # Create workspace for this prompt
-        workspace = self.file_manager.create_prompt_workspace(prompt_id)
+        # Create workspace for this prompt - Ask for project name
+        self.console.print("\n[bold cyan]📁 Project Name[/bold cyan]")
+        project_name = input("Enter a name for this project (or press Enter for auto-name): ").strip()
+        workspace = self.file_manager.create_prompt_workspace(project_name if project_name else None)
         self.log(f"📁 Workspace created: {workspace}", "dim")
         
         # Display workflow plan

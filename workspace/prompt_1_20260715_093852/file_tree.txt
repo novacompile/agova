@@ -1,0 +1,14 @@
+FILE TREE
+==================================================
+
+prompt_1_20260715_093852/
+├── │   code/
+│   ├── full_response.txt (92.0 B)
+│   └── solution_1.py (78.0 B)
+├── │   debug/
+├── query.txt (85.0 B)
+├── │   research/
+│   └── findings.txt (6.7 KB)
+├── results.json (7.8 KB)
+└──     validation/
+    └── report.txt (202.0 B)
