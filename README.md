@@ -13,8 +13,7 @@ git clone https://github.com/novacompile/agova.git ~/agova
 cd ~/agova
 
 # Run the installer
-chmod +x install/install.sh
-./install/install.sh
+bash install/install.sh
 
 # Restart your terminal or run:
 source ~/.bashrc  # or source ~/.zshrc
