@@ -1,4 +1,4 @@
-# agova - <span id="version">v1.2.0</span>
+# agova - <span id="version">v1.2.1</span>
 Robust agent swarm and orchestrator, for advanced prompting and tasks.
 
 ---
