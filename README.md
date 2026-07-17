@@ -9,8 +9,8 @@ For installation on Windows using batch, follow the steps on the [full installat
 
 ```bash
 # Clone the repository
-git clone https://github.com/novacompile/agova.git
-cd agova
+git clone https://github.com/novacompile/agova.git ~/agova
+cd ~/agova
 
 # Run the installer
 chmod +x install/install.sh
